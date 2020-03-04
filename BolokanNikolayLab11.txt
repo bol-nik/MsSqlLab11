@@ -1,0 +1,48 @@
+1.Написать функцию для определения количества сотрудников в указанном отделе.
+
+create function Office_qty_sp(@office_index varchar(50))
+returns real
+as
+begin
+Declare @of_id_new int
+Select @of_id_new=of_id from Office where [office] = @office_index
+
+Declare @id_col int 
+Select @id_col=count (*) from Sperson where [of_id]=@of_id_new
+return @id_col
+end
+------------------------------------
+Select dbo.Office_qty_sp('Bruxelles')Bruxelles,
+dbo.Office_qty_sp('Chicago') Chicago,
+dbo.Office_qty_sp('Tokyo')Tokyo,
+dbo.Office_qty_sp('Buenos-Aires') Buenos_Aires
+
+
+2.Написать функцию, которая возвращает таблицу служащих, 
+которые прямо или косвенно подчиняются  сотруднику Terii Cardon (sp_id, sp_name).
+create function SpersonsAtSperson(@sp_name_new varchar(50))
+returns @table table(sp_id int ,sp_name varchar(50),man_id int, 
+of_id int, comm int)
+as
+begin
+Declare @id_TC int
+select @id_TC =sp_id from Sperson where sp_name=@sp_name_new;
+
+
+with Tree (sp_name,sp_id,man_id,of_id,comm) as
+(Select sp_name,sp_id,man_id,of_id,comm from Sperson 
+where man_id=@id_TC
+union all
+select s.sp_name,s.sp_id,s.man_id,s.of_id,s.comm
+from Sperson s
+inner join Tree on Tree.sp_id=s.man_id)
+
+insert @table 
+Select sp_id,sp_name,man_id,of_id,comm
+from Tree
+return
+end
+----------------------------------------------------
+Select *from SpersonsAtSperson('Terii Cardon')
+Select *from SpersonsAtSperson('Albert Aidj')
+Select *from SpersonsAtSperson('Bolokan Nikolay')
